@@ -32,8 +32,9 @@
 ;; Natural -> Natural
 ;; Compute n!
 (define (fact n)
-  ;; TODO
-  1)
+  (if (= n 0)
+      1
+      (* n (fact (- n 1)))))
 
 (module+ test
   (check-equal? (fact 0) 1)
@@ -44,8 +45,9 @@
 ;; Natural -> Natural
 ;; Compute nth Fibonnaci number
 (define (fib n)
-  ;; TODO
-  0)
+  (if (or (= n 0) (= n 1))
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
 
 (module+ test
   (check-equal? (fib 0) 0)
@@ -66,8 +68,9 @@
 ;; String String -> String
 ;; Select the longer of the two strings (or first if same length)
 (define (longer s1 s2)
-  ;; TODO
-  s1)
+  (if (>= (string-length s1) (string-length s2))
+      s1
+      s2))
 
 (module+ test
   (check-equal? (longer "" "") "")
@@ -78,8 +81,9 @@
 ;; String -> [Listof String]
 ;; Explode a string into a list of length-1 strings
 (define (explode s)
-  ;; TODO
-  '())
+  (if (string=? s "")
+      '()
+      (map string (string->list s))))
 
 (module+ test
   (check-equal? (explode "") '())
@@ -89,8 +93,12 @@
 ;; String -> [Listof [List String String]]
 ;; Compute list of bigrams (pairs of adjacent letters) in a string
 (define (bigrams s)
-  ;; TODO
-  '())
+  (if (< (string-length s) 2)
+      '()
+      (let loop ((chars (string->list s)) (acc '()))
+        (if (< (length chars) 2)
+            (reverse acc)
+            (loop (cdr chars) (cons (list (string (car chars)) (string (cadr chars))) acc))))))
 
 (module+ test
   (check-equal? (bigrams "") '())
@@ -113,8 +121,9 @@
 ;; [Listof Number] -> Natural
 ;; Compute the length of given list of numbers
 (define (length-lon ls)
-  ;; TODO
-  0)
+  (if (null? ls)
+      0
+      (+ 1 (length-lon (cdr ls)))))
 
 (module+ test
   (check-equal? (length-lon '()) 0)
@@ -125,8 +134,9 @@
 ;; [Listof Number] -> Number
 ;; Compute the sum of given list of numbers
 (define (sum ls)
-  ;; TODO
-  0)
+  (if (null? ls)
+      0
+      (+ (car ls) (sum (cdr ls)))))
 
 (module+ test
   (check-equal? (sum '()) 0)
@@ -138,8 +148,9 @@
 ;; Compute the pairwise sum of given list of numbers
 ;; ASSUME: lists have equal length
 (define (zip-add ls1 ls2)
-  ;; TODO
-  '())
+  (if (or (null? ls1) (null? ls2))
+      '()
+      (cons (+ (car ls1) (car ls2)) (zip-add (cdr ls1) (cdr ls2)))))
 
 (module+ test
   (check-equal? (zip-add '() '()) '())
@@ -150,8 +161,9 @@
 ;; Compute the pairwise list of given list of numbers
 ;; ASSUME: lists have equal length
 (define (zip-lon ls1 ls2)
-  ;; TODO
-  '())
+  (if (or (null? ls1) (null? ls2))
+      '()
+      (cons (list (car ls1) (car ls2)) (zip-lon (cdr ls1) (cdr ls2)))))
 
 (module+ test
   (check-equal? (zip-lon '() '()) '())
@@ -161,8 +173,9 @@
 ;; [Pairof Real [Listof Real]] -> Real
 ;; Compute max element of non-empty list of numbers
 (define (max-lon xs)
-  ;; TODO
-  0)
+  (if (null? (cdr xs))
+      (car xs)
+      (max (car xs) (max-lon (cdr xs)))))
 
 (module+ test
   (check-equal? (max-lon '(1)) 1)
