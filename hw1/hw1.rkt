@@ -187,8 +187,7 @@
 ;; Sort list into ascending order
 ;; HINT: do insertion sort by writing and using the helper below
 (define (sort-asc xs)
-  ;; TODO
-  xs)
+  (foldl (lambda (x acc) (insert-asc x acc)) '() xs))
 
 (module+ test
   (check-equal? (sort-asc '()) '())
@@ -201,8 +200,10 @@
 ;; Insert number into sorted list
 ;; ASSUME: given list is sorted in ascending order
 (define (insert-asc n xs)
-  ;; TODO
-  xs)
+  (cond
+    [(null? xs) (list n)]
+    [(<= n (car xs)) (cons n xs)]
+    [else (cons (car xs) (insert-asc n (cdr xs)))]))
 
 (module+ test
   (check-equal? (insert-asc 5 '()) '(5))
@@ -216,8 +217,7 @@
 ;; ∀ (α) (α -> Real) [Pairof α [Listof α]] -> α
 ;; Find element that minimizes the given measure (take first if more than one)
 (define (minimize f xs)
-  ;; TODO
-  (first xs))
+  (foldl (lambda (x acc) (if (< (f x) (f acc)) x acc)) (first xs) xs))
 
 (module+ test
   (check-equal? (minimize abs '(1 -2 3)) 1)
@@ -228,8 +228,21 @@
 ;; Sort list in ascending order according to given comparison
 ;; ENSURE: result is stable
 (define (sort < xs)
-  ;; TODO
-  xs)
+  (define (merge xs ys)
+    (cond
+      [(null? xs) ys]
+      [(null? ys) xs]
+      [else
+       (if (< (car xs) (car ys))
+           (cons (car xs) (merge (cdr xs) ys))
+           (cons (car ys) (merge xs (cdr ys))))]))
+  (define (merge-sort xs)
+    (if (or (null? xs) (null? (cdr xs)))
+        xs
+        (let-values ([(l1 l2) (split-at xs (quotient (length xs) 2))])
+          (merge (merge-sort l1) (merge-sort l2)))))
+  (merge-sort xs))
+
 
 
 (module+ test
@@ -244,8 +257,9 @@
 ;; Zip together lists into a list of lists
 ;; ASSUME: lists are the same length
 (define (zip as bs)
-  ;; TODO
-  '())
+  (cond
+    [(or (null? as) (null? bs)) '()]
+    [else (cons (list (car as) (car bs)) (zip (cdr as) (cdr bs)))]))
 
 (module+ test
   (check-equal? (zip '() '()) '())
@@ -257,8 +271,7 @@
 ;; Compose a list of functions into a single function
 ;; ((pipe (list f1 f2 f3)) x) ≡ (f1 (f2 (f3 x)))
 (define (pipe fs)
-  ;; TODO
-  (λ (x) x))
+  (lambda (x) (foldr (lambda (f acc) (f acc)) x fs)))
 
 (module+ test
   (check-equal? ((pipe (list number->string sqr add1)) 5) "36")
@@ -282,8 +295,7 @@
 ;; Natural -> N
 ;; Convert natural to Peano
 (define (nat->peano n)
-  ;; TODO
-  (Z))
+  (if (= n 0) (Z) (S (nat->peano (- n 1)))))
 
 (module+ test
   (check-equal? (nat->peano 0) (Z))
@@ -294,8 +306,9 @@
 ;; N -> Natural
 ;; Convert Peano to natural
 (define (peano->nat n)
-  ;; TODO
-  0)
+  (match n
+    [(Z) 0]
+    [(S m) (+ 1 (peano->nat m))]))
 
 (module+ test
   (check-equal? (peano->nat (Z)) 0)
@@ -308,8 +321,9 @@
 ;; N N -> N
 ;; Add two Peano numbers together
 (define (plus n1 n2)
-  ;; TODO
-  (Z))
+  (match n1
+    [(Z) n2]
+    [(S m) (S (plus m n2))]))
 
 (module+ test
   (check-equal? (plus (Z) (Z)) (Z))
@@ -320,8 +334,9 @@
 ;; N N -> N
 ;; Multiply two Peano numbers together
 (define (mult n1 n2)
-  ;; TODO
-  (Z))
+  (match n1
+    [(Z) (Z)]
+    [(S m) (plus n2 (mult m n2))]))
 
 (module+ test
   (check-equal? (mult (Z) (Z)) (Z))
@@ -331,8 +346,10 @@
 
 ;; ∀ (α) N (α -> α) -> (α -> α)
 (define (iter n f)
-  ;; TODO
-  (λ (a) a))
+  (lambda (a)
+    (match n
+      [(Z) a]
+      [(S m) (f ((iter m f) a))])))
 
 (module+ test
   ;; Natural -> Natural
@@ -380,8 +397,9 @@
 ;; BTNumber -> Natural
 ;; Compute the height of a binary tree (leaf has height 0)
 (define (btn-height bt)
-  ;; TODO
-  0)
+  (match bt
+    [(leaf) 0]
+    [(node _ left right) (add1 (max (btn-height left) (btn-height right)))]))
 
 (module+ test
   (check-equal? (btn-height (leaf)) 0)
@@ -391,8 +409,9 @@
 ;; BTNumber -> Natural
 ;; Count the nodes of a binary tree
 (define (btn-count bt)
-  ;; TODO
-  0)
+  (match bt
+    [(leaf) 0]
+    [(node _ left right) (add1 (+ (btn-count left) (btn-count right)))]))
 
 (module+ test
   (check-equal? (btn-count (leaf)) 0)
@@ -402,8 +421,9 @@
 ;; BTNumber -> BTNumber
 ;; Compute the mirror image of binary tree
 (define (btn-mirror bt)
-  ;; TODO
-  (leaf))
+  (match bt
+    [(leaf) (leaf)]
+    [(node value left right) (node value (btn-mirror right) (btn-mirror left))]))
 
 (module+ test
   (check-equal? (btn-mirror (leaf)) (leaf))
@@ -414,8 +434,9 @@
 ;; BTNumber -> Number
 ;; Sum the numbers of a binary tree
 (define (btn-sum bt)
-  ;; TODO
-  0)
+  (match bt
+    [(leaf) 0]
+    [(node value left right) (+ value (btn-sum left) (btn-sum right))]))
 
 (module+ test
   (check-equal? (btn-sum (leaf)) 0)
@@ -425,8 +446,9 @@
 ;; Natural Number -> BTNumber
 ;; Generate a full bt of height h containing given number n at each node
 (define (btn-gen-full h n)
-  ;; TODO
-  (leaf))
+  (if (= h 0)
+      (leaf)
+      (node n (btn-gen-full (- h 1) n) (btn-gen-full (- h 1) n))))
 
 (module+ test
   (check-equal? (btn-gen-full 0 8) (leaf))
@@ -436,8 +458,11 @@
 ;; BTNumber Number -> Boolean
 ;; Does the bt contain number n?
 (define (btn-contains? bt n)
-  ;; TODO
-  #f)
+  (match bt
+    [(leaf) #f]
+    [(node value left right) (or (= value n) 
+                                 (btn-contains? left n) 
+                                 (btn-contains? right n))]))
 
 (module+ test
   (check-equal? (btn-contains? (leaf) 8) #f)
@@ -449,8 +474,9 @@
 ;; Generate the list of numbers in bt in preorder
 ;; HINT: append is a function that might be helpful
 (define (btn-preorder btn)
-  ;; TODO
-  '())
+  (match btn
+    [(leaf) '()]
+    [(node value left right) (append (list value) (btn-preorder left) (btn-preorder right))]))
 
 (module+ test
   (check-equal? (btn-preorder (leaf)) '())
