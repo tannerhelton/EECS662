@@ -11,6 +11,15 @@
     [(? boolean?) (Val s)]
     [(list (? unop? u) e) (UnOp u (parse e))]
     [(list (? binop? b) e1 e2) (BinOp b (parse e1) (parse e2))]
+    [(list 'cond clauses ...)
+      (let* ([parsedClauses (map (lambda (clause)
+                              (if (eq? (car clause) 'else)
+                                  'else
+                                  (list (parse (car clause)) (parse (cadr clause)))))
+                            clauses)]
+        [elseClause (cond [(assoc 'else clauses) => (lambda (p) (parse (cadr p)))]
+                          [else (error "Cond expression must end with an else clause")])])
+      (Cond parsedClauses elseClause))]
     [`(if ,e1 ,e2 ,e3) (If (parse e1) (parse e2) (parse e3))]
     [_ (error "Parse error!")]))
 

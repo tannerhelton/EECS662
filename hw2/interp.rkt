@@ -10,7 +10,21 @@
     [(Val v) v]
     [(UnOp u e) (interp-unop u e)]
     [(BinOp b e1 e2) (interp-binop b e1 e2)]
-    [(If e1 e2 e3) (interp-if e1 e2 e3)]))
+    [(If e1 e2 e3) (interp-if e1 e2 e3)]
+    [(Cond clauses elseClause) 
+     (define (eval-cond-clauses clauses)
+       (cond
+         [(null? clauses) (interp elseClause)]
+         [else
+          (let* ([clause (first clauses)]
+                 [condition (first clause)]
+                 [action (second clause)])
+            (if (eq? (interp condition) #t)
+                (interp action)
+                (eval-cond-clauses (rest clauses))))]))
+     (eval-cond-clauses clauses)])) 
+
+
 
 (define (interp-unop u e)
   (match u
