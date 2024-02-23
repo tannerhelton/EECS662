@@ -7,6 +7,6 @@
 (define (main fn)
   (let ([p (open-input-file fn)])
     (begin
-      (read-line p) ;; ignore #lang racket line
+      (read-line p)
       (println (interp (parse (read p))))
       (close-input-port p))))

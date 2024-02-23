@@ -4,17 +4,16 @@
 
 (provide interp)
 
-;; interp :: Expr -> Int
 (define (interp e)
   (match e
     [(Val v) v]
     [(UnOp u e) (interp-unop u e)]
     [(BinOp b e1 e2) (interp-binop b e1 e2)]
     [(If e1 e2 e3) (interp-if e1 e2 e3)]
-    [(Cond clauses elseClause) 
+    [(Cond clauses eClause) 
      (define (eval-cond-clauses clauses)
        (cond
-         [(null? clauses) (interp elseClause)]
+         [(null? clauses) (interp eClause)]
          [else
           (let* ([clause (first clauses)]
                  [condition (first clause)]
@@ -53,4 +52,5 @@
 (module+ test
   (check-eqv? (interp (parse '(+ 42 (sub1 34)))) 75)
   (check-eqv? (interp (parse '(zero? (- 5 (sub1 6))))) #t)
-  (check-eqv? (interp (parse '(if (zero? 0) (add1 5) (sub1 5)))) 6))
+  (check-eqv? (interp (parse '(if (zero? 0) (add1 5) (sub1 5)))) 6)
+  (check-eqv? (interp (parse '(cond [(zero? 0) 5] [else 6]))) 5))
