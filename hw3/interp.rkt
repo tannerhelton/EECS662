@@ -26,13 +26,20 @@
     [(App e es)      (interp-app D E e es)]))
 
 (define (extend-env-with-bindings D E bindings)
-  ; Evaluate all bindings in parallel and add to environment
-)
+  (foldl (lambda (binding env)
+           (let ((var (first binding))
+                 (expr (second binding)))
+             (store env var (interp D env expr))))
+         E
+         bindings))
 
 (define (extend-env-with-bindings-sequentially D E bindings)
-  ; Evaluate bindings one by one, extending the environment each time
-)
-
+  (foldl (lambda (binding env)
+           (let ((var (first binding))
+                 (expr (second binding)))
+             (store env var (interp D env expr))))
+         E
+         bindings))
 
 ;; interp-lam :: Defn -> Env -> Vars -> Expr -> Val
 (define (interp-lam D E xs body)

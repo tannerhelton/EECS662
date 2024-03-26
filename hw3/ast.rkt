@@ -22,7 +22,8 @@
 (struct UnOp  (u e)      #:prefab)
 (struct BinOp (b e1 e2)  #:prefab)
 (struct If    (e1 e2 e3) #:prefab)
-(struct Let   (x e1 e2)  #:prefab)
+; (struct Let   (x e1 e2)  #:prefab)
+(struct Let   (bindings e) #:prefab) 
 (struct Let*  (bindings e) #:prefab)
 (struct App   (x args)   #:prefab)
 
