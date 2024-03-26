@@ -17,9 +17,22 @@
     [(UnOp u e)      (interp-unop D E u e)]
     [(BinOp b e1 e2) (interp-binop D E b e1 e2)]
     [(If e1 e2 e3)   (interp-if D E e1 e2 e3)]
-    [(Let x e1 e2)   (interp D (store E x (interp D E e1)) e2)]
+    ; [(Let x e1 e2)   (interp D (store E x (interp D E e1)) e2)]
+    [(Let bindings body)  (let ([new-env (extend-env-with-bindings D E bindings)])
+                            (interp D new-env body))]
+    [(Let* bindings body) (let ([new-env (extend-env-with-bindings-sequentially D E bindings)])
+                            (interp D new-env body))]
     [(Lam xs e)      (interp-lam D E xs e)]
     [(App e es)      (interp-app D E e es)]))
+
+(define (extend-env-with-bindings D E bindings)
+  ; Evaluate all bindings in parallel and add to environment
+)
+
+(define (extend-env-with-bindings-sequentially D E bindings)
+  ; Evaluate bindings one by one, extending the environment each time
+)
+
 
 ;; interp-lam :: Defn -> Env -> Vars -> Expr -> Val
 (define (interp-lam D E xs body)

@@ -13,7 +13,9 @@
     [(list (? unop? u) e)      (UnOp u (parse e))]
     [(list (? binop? b) e1 e2) (BinOp b (parse e1) (parse e2))]
     [`(if ,e1 ,e2 ,e3)         (If (parse e1) (parse e2) (parse e3))]
-    [`(let ((,x ,e1)) ,e2)     (Let x (parse e1) (parse e2))]
+    ; [`(let ((,x ,e1)) ,e2)     (Let x (parse e1) (parse e2))]
+    [`(let (,@bindings) ,e)     (Let (map parse-binding bindings) (parse e))]
+    [`(let* (,@bindings) ,e)    (Let* (map parse-binding bindings) (parse e))]
     [`(lambda (,@xs) ,e)       (Lam xs (parse e))]
     [`(λ (,@xs) ,e)            (Lam xs (parse e))]
     [(cons e es)               (App (parse e) (map parse es))]
@@ -36,6 +38,11 @@
 ;; Any -> Boolean
 (define (unop? x)
   (memq x '(add1 sub1 zero?)))
+
+(define (parse-binding binding)
+  (match binding
+    [(list x e) (list x (parse e))]
+    [_          (error "Parse error in let/let* binding!")]))
 
 ;; Any -> Boolean
 (define (binop? x)
