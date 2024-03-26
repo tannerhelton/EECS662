@@ -9,3 +9,4 @@
       (odd? (sub1 x))))
 
 (odd? 42)
+(even? 42)
