@@ -13,7 +13,6 @@
     [(list (? unop? u) e)      (UnOp u (parse e))]
     [(list (? binop? b) e1 e2) (BinOp b (parse e1) (parse e2))]
     [`(if ,e1 ,e2 ,e3)         (If (parse e1) (parse e2) (parse e3))]
-    ; [`(let ((,x ,e1)) ,e2)     (Let x (parse e1) (parse e2))]
     [`(let (,@bindings) ,e)     (Let (map parse-binding bindings) (parse e))]
     [`(let* (,@bindings) ,e)    (Let* (map parse-binding bindings) (parse e))]
     [`(lambda (,@xs) ,e)       (Lam xs (parse e))]

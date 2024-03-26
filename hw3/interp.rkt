@@ -17,7 +17,6 @@
     [(UnOp u e)      (interp-unop D E u e)]
     [(BinOp b e1 e2) (interp-binop D E b e1 e2)]
     [(If e1 e2 e3)   (interp-if D E e1 e2 e3)]
-    ; [(Let x e1 e2)   (interp D (store E x (interp D E e1)) e2)]
     [(Let bindings body)  (let ([new-env (extend-env-with-bindings D E bindings)])
                             (interp D new-env body))]
     [(Let* bindings body) (let ([new-env (extend-env-with-bindings-sequentially D E bindings)])
@@ -48,10 +47,21 @@
 
 ;; interp-app :: Defn -> Env -> Expr -> Exprs -> Val
 (define (interp-app D E f es)
-    (let ([fn   (interp D E f)]
-          [args (map (λ (arg)
-                       (interp D E arg)) es)])
-         (fn args)))
+  (let* ((fn-val (interp D E f))
+         (args (map (lambda (arg) (interp D E arg)) es)))
+    (match fn-val
+      [(Lam xs body)
+       (if (= (length xs) (length args))
+           (interp D (extend-env E xs args) body)
+           (raise (Err "Arity mismatch")))]
+      [_ (raise (Err "Application of non-function"))])))
+
+(define (extend-env E xs args)
+  (foldr (lambda (x a env) (store env x a))
+         E
+         xs
+         args))
+
 
 ;; interp-prog :: Prog -> Val
 (define (interp-prog prog)
