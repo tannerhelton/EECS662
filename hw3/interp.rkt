@@ -28,9 +28,10 @@
   (foldl (lambda (binding env)
            (let ((var (first binding))
                  (expr (second binding)))
-             (store env var (interp D env expr))))
+             (store env var (interp D E expr)))) 
          E
          bindings))
+
 
 (define (extend-env-with-bindings-sequentially D E bindings)
   (foldl (lambda (binding env)
