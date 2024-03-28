@@ -17,52 +17,24 @@
     [(UnOp u e)      (interp-unop D E u e)]
     [(BinOp b e1 e2) (interp-binop D E b e1 e2)]
     [(If e1 e2 e3)   (interp-if D E e1 e2 e3)]
-    [(Let bindings body)  (let ([new-env (extend-env-with-bindings D E bindings)])
-                            (interp D new-env body))]
-    [(Let* bindings body) (let ([new-env (extend-env-with-bindings-sequentially D E bindings)])
-                            (interp D new-env body))]
+    [(Let xs e)      (interp D (store-xs D E xs) e)]
+    [(Let* xs e)     (interp D (store* D E xs) e)]
     [(Lam xs e)      (interp-lam D E xs e)]
-    [(App e es)      (interp-app D E e es)]))
+    [(App e es)      (interp-app D E e es)]
+    ))
 
-(define (extend-env-with-bindings D E bindings)
-  (foldl (lambda (binding env)
-           (let ((var (first binding))
-                 (expr (second binding)))
-             (store env var (interp D E expr)))) 
-         E
-         bindings))
-
-
-(define (extend-env-with-bindings-sequentially D E bindings)
-  (foldl (lambda (binding env)
-           (let ((var (first binding))
-                 (expr (second binding)))
-             (store env var (interp D env expr))))
-         E
-         bindings))
 
 ;; interp-lam :: Defn -> Env -> Vars -> Expr -> Val
 (define (interp-lam D E xs body)
-  (λ (aargs)
-    (interp D (append (zip xs aargs) E) body)))
+  (λ (aargs) (if (eq? (length aargs) (length xs))
+    (interp D (append (zip xs aargs) E) body) (raise (Err "arity mismatch")))))
 
 ;; interp-app :: Defn -> Env -> Expr -> Exprs -> Val
 (define (interp-app D E f es)
-  (let* ((fn-val (interp D E f))
-         (args (map (lambda (arg) (interp D E arg)) es)))
-    (match fn-val
-      [(Lam xs body)
-       (if (= (length xs) (length args))
-           (interp D (extend-env E xs args) body)
-           (raise (Err "Arity mismatch")))]
-      [_ (raise (Err "Application of non-function"))])))
-
-(define (extend-env E xs args)
-  (foldr (lambda (x a env) (store env x a))
-         E
-         xs
-         args))
-
+    (let ([fn   (interp D E f)]
+          [args (map (λ (arg)
+                       (interp D E arg)) es)])
+         (fn args)))
 
 ;; interp-prog :: Prog -> Val
 (define (interp-prog prog)
@@ -119,27 +91,55 @@
 
 (define zip (lambda (l1 l2) (map list l1 l2)))
 
-;; store :: Env -> Symbol -> Val -> Env
 (define (store E x v)
   (cons (list x v) E))
 
-;; lookup :: Defn -> Env -> Symbol -> Val
 (define (lookup D E x)
-  ; lookup the environment first, then the list of definitions
   (match E
     ['()                      (lookup-defn D D x)]
     [(cons (list y val) rest) (if (eq? x y) val
                                   (lookup D rest x))]))
 
-;; lookup-defn :: Defn -> Defn -> Symbol -> Val
 (define (lookup-defn D defns x)
   (match defns
     ['()                          (raise (Err
                                           (string-append "Unbound identifier: "
                                                          (symbol->string x))))]
     [(cons (Defn f xs body) rest) (if (eq? f x)
-                                      (λ (aargs) (interp D (zip xs aargs) body))
+                                      (λ (aargs) (if (eq? (length aargs) (length xs)) (interp D (zip xs aargs) body) (raise (Err (format "~a: arity mismatch" f)))))
                                       (lookup-defn D rest x))]
     [(cons (DefnV y e) rest)      (if (eq? x y)
                                       (interp D '() e)
                                       (lookup-defn D rest x))]))
+
+(define (store-xs D E xs)
+  (match xs
+    ['() E]
+    [xs (append (store-new D E '() xs) E)]))
+
+(define (store-new D E-old E-new xs)
+  (match xs
+    ['() E-new]
+    [(cons head tail) (cond
+                [(defined? D E-new (var-str (car head))) 
+                    (raise (Err (string-append "let: duplicate identifier in: " (symbol->string (var-str (car head))))))]
+                [else (store-new D E-old (cons (list (var-str (car head)) (interp D E-old (cdr head))) E-new) tail)])]))
+
+(define (store* D E xs)
+  (match xs
+    ['() E]
+    [(cons head tail) 
+      (store* D (cons (list (var-str (car head)) 
+      (interp D E (cdr head))) E) tail)]))
+
+(define (var-str v)
+  (match v
+    [`#s(Var ,x) x]
+    [`(#s(Var ,x)) x]))
+
+(define (defined? D E x)
+  (match E
+    ['() #f]
+    [(cons (list y val) rest) (if (eq? x y) #t (defined? D rest x))]))
+
+      
