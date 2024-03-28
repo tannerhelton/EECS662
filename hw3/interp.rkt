@@ -36,6 +36,23 @@
                        (interp D E arg)) es)])
          (fn args)))
 
+(define (store* D E xs)
+  (match xs
+    ['() E]
+    [(cons head tail) 
+      (store* D (cons (list (var-str (car head)) 
+      (interp D E (cdr head))) E) tail)]))
+
+(define (var-str v)
+  (match v
+    [`#s(Var ,x) x]
+    [`(#s(Var ,x)) x]))
+
+(define (defined? D E x)
+  (match E
+    ['() #f]
+    [(cons (list y val) rest) (if (eq? x y) #t (defined? D rest x))]))
+
 ;; interp-prog :: Prog -> Val
 (define (interp-prog prog)
   (match prog
@@ -124,22 +141,3 @@
                 [(defined? D E-new (var-str (car head))) 
                     (raise (Err (string-append "let: duplicate identifier in: " (symbol->string (var-str (car head))))))]
                 [else (store-new D E-old (cons (list (var-str (car head)) (interp D E-old (cdr head))) E-new) tail)])]))
-
-(define (store* D E xs)
-  (match xs
-    ['() E]
-    [(cons head tail) 
-      (store* D (cons (list (var-str (car head)) 
-      (interp D E (cdr head))) E) tail)]))
-
-(define (var-str v)
-  (match v
-    [`#s(Var ,x) x]
-    [`(#s(Var ,x)) x]))
-
-(define (defined? D E x)
-  (match E
-    ['() #f]
-    [(cons (list y val) rest) (if (eq? x y) #t (defined? D rest x))]))
-
-      
