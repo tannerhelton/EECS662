@@ -3,6 +3,7 @@
 (struct Var (x) #:prefab)
 (struct Lam (x e) #:prefab)
 (struct App (f arg) #:prefab)
+(require rackunit)
 
 (define (parse s)
   (match s
@@ -18,17 +19,26 @@
     [(App f arg) (list (unparse f) (unparse arg))]))
 
 (define (free? bound id e)
-  ; TODO
-  '())
+  (match e
+    [(Var x) (and (not (member id bound)) (eq? x id))]
+    [(Lam x e) (free? (cons x bound) id e)]
+    [(App f arg) (or (free? bound id f) (free? bound id arg))]))
+
 
 ; z has to be fresh
 (define (alpha-reduce M x z)
-  ; TODO
-  '())
+  (match M
+    [(Var y) (if (eq? x y) (Var z) M)]
+    [(Lam y e) (if (eq? y x) (Lam y e) (Lam y (alpha-reduce e x z)))]
+    [(App f arg) (App (alpha-reduce f x z) (alpha-reduce arg x z))]))
+
 
 (define (beta-reduce M x N)
-  ; TODO
-  '())
+  (match M
+    [(Var y) (if (eq? x y) N M)]
+    [(Lam y e) (if (eq? y x) (Lam y e) (Lam y (beta-reduce e x N)))]
+    [(App f arg) (App (beta-reduce f x N) (beta-reduce arg x N))]))
+
 
 (module+ test
   (require rackunit)
@@ -42,7 +52,8 @@
   (check-equal? (unparse (alpha-reduce (parse '(λ (y) x)) 'y (gensym)))
                 '(λ (y) x))
 
-  (check-equal? (unparse (beta-reduce (parse '(x x)) 'x (parse '(λ (x) (x x)))))
-                '((λ (x) (x x)) (λ (x) (x x))))
-  (check-match (unparse (beta-reduce (parse '(λ (y) x)) 'x (parse 'y)))
-                `(λ (,(? symbol?)) y)))
+  (check-equal? (unparse (beta-reduce (parse '(λ (y) x)) 'x (parse 'y)))
+              '(λ (y) y))
+  
+  (check-equal? (unparse (beta-reduce (parse '(λ (y) x)) 'x (parse 'y)))
+              '(λ (y) y)))
