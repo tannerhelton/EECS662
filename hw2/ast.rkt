@@ -6,4 +6,4 @@
 (struct UnOp (u e) #:prefab)
 (struct BinOp (b e1 e2) #:prefab)
 (struct If (e1 e2 e3) #:prefab)
-(struct Cond (clauses elseClause) #:prefab)
+(struct Cond (cs e) #:prefab)
