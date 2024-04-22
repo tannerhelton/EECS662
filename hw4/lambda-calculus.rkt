@@ -43,14 +43,25 @@
     [_ M]))
 
 
+(define (free-variables exp bound)
+  (match exp
+    [(Var x) (if (member x bound) '() (list x))]
+    [(Lam x body) (free-variables body (cons x bound))]
+    [(App f arg) (union (free-variables f bound) (free-variables arg bound))]
+    [_ '()]))
+
+(define (union a b)
+  (remove-duplicates (append a b)))
+
 (define (beta-reduce M x N)
   (match M
     [(Var v) (if (eq? v x) N M)]
     [(Lam v body)
      (if (eq? v x)
          (Lam v body)  
-         (let ((fresh-v (if (free? '() x body) (gensym) v)))
-           (Lam fresh-v (beta-reduce (alpha-reduce body x fresh-v) x N))))]
+         (let* ((free-in-N (free-variables N '()))  
+                (fresh-v (if (member v free-in-N) (gensym) v)))
+           (Lam fresh-v (beta-reduce (alpha-reduce body v fresh-v) x (alpha-reduce N x fresh-v)))))]
     [(App f arg)
      (App (beta-reduce f x N) (beta-reduce arg x N))]
     [_ M]))
