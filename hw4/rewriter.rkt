@@ -5,12 +5,37 @@
 (require "ast.rkt" "parser.rkt")
 
 (define (cond->if e)
-  ; TODO
-  '())
+  (match e
+    [(Cond cs else-expr)
+     (define (cond->if-helper clauses)
+       (match clauses
+         [(list) else-expr] 
+         [(cons (list pred action) rest)
+          (If pred action (cond->if-helper rest))]))
+     (cond->if-helper cs)]
+    [_ e])) 
+
+
 
 (define (currify e)
-  ; TODO
-  '())
+  (match e
+    [(Lam xs body)
+     (define (nest-lambdas variables)
+       (match variables
+         [(list) body]
+         [(list x) (Lam (list x) body)]
+         [(cons x rest) (Lam (list x) (nest-lambdas rest))]))
+     (nest-lambdas xs)]
+    [(App ef es)
+     (define (nest-applications f args)
+       (match args
+         [(list) f] 
+         [(list arg) (App f arg)]
+         [(cons arg1 rest) (nest-applications (App f arg1) rest)]))
+     (nest-applications ef es)]
+    [_ e])) 
+
+
 
 (module+ test
   (require rackunit)

@@ -20,17 +20,28 @@
     [(App f arg) (list (unparse f) (unparse arg))]))
 
 (define (free? bound id e)
-  ; TODO
-  '())
+  (match e
+    [(Var x) (not (member id bound))]
+    [(Lam x body) (free? (cons x bound) id body)]
+    [(App f arg) (or (free? bound id f) (free? bound id arg))]
+    [_ #f]))
 
 ; z has to be fresh
 (define (alpha-reduce M x z)
-  ; TODO
-  '())
+  (match M
+    [(Var v) (if (eq? v x) (Var z) M)]
+    [(Lam v body) (Lam (if (eq? v x) z v) (alpha-reduce body x z))]
+    [(App f arg) (App (alpha-reduce f x z) (alpha-reduce arg x z))]
+    [_ M]))
+
 
 (define (beta-reduce M x N)
-  ; TODO
-  '())
+  (match M
+    [(Var v) (if (eq? v x) N M)]
+    [(Lam v body) (if (eq? v x) M (Lam v (beta-reduce body x N)))]
+    [(App f arg) (App (beta-reduce f x N) (beta-reduce arg x N))]
+    [_ M]))
+
 
 (module+ test
   (require rackunit)
