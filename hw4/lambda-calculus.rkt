@@ -28,17 +28,21 @@
 
 ; z has to be fresh
 (define (alpha-reduce M x z)
-  (match M
+(match M
     [(Var v) (if (eq? v x) (Var z) M)]
-    [(Lam v body) (Lam (if (eq? v x) z v) (alpha-reduce body x z))]
+    [(Lam v body) (if (eq? v x)
+                      (Lam v body) 
+                      (Lam v (alpha-reduce body x z)))]  
     [(App f arg) (App (alpha-reduce f x z) (alpha-reduce arg x z))]
     [_ M]))
 
 
 (define (beta-reduce M x N)
-  (match M
+ (match M
     [(Var v) (if (eq? v x) N M)]
-    [(Lam v body) (if (eq? v x) M (Lam v (beta-reduce body x N)))]
+    [(Lam v body) (if (eq? v x)
+                      M 
+                      (Lam v (beta-reduce body x N)))] 
     [(App f arg) (App (beta-reduce f x N) (beta-reduce arg x N))]
     [_ M]))
 

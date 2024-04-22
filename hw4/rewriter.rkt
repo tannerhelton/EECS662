@@ -15,31 +15,31 @@
      (cond->if-helper cs)]
     [_ (transform e)]))
 
-(define (currify e)
-  (match e
-    [(Lam xs body) 
-     (define (nest-lambdas variables)
-       (match variables
-         [(list) body] 
-         [(list x) (Lam (list x) body)]
-         [(cons x rest) (Lam (list x) (nest-lambdas rest))]))
-     (nest-lambdas xs)]
-    [(App ef es) 
-     (define (nest-applications f args)
-       (match args
-         [(list) f] 
-         [(list arg) (App f arg)]
-         [(cons arg1 rest) (nest-applications (App f arg1) rest)]))
-     (nest-applications (transform ef) (map transform es))]
-    [_ (transform e)]))
 
+(define (currify e)
+  (define (curry-lambda xs body)
+    (if (null? xs)
+        (transform body)
+        (let ([first (car xs)]
+              [rest (cdr xs)])
+          (Lam (list first) (curry-lambda rest body)))))
+  
+  (define (curry-application f args)
+    (foldl (lambda (acc arg) (App acc (transform arg)))
+           (transform f)
+           args))
+  
+  (match e
+    [(Lam xs body) (curry-lambda xs body)]
+    [(App f args) (curry-application f args)]
+    [_ (transform e)]))
 
 (define (transform e)
   (match e
     [(Cond cs else-expr) (cond->if e)]
     [(If e1 e2 e3) (If (transform e1) (transform e2) (transform e3))]
-    [(App f args) (App (transform f) (map transform args))]
-    [(Lam xs body) (Lam xs (transform body))]
+    [(App f args) (App (transform f) (map transform args))] 
+    [(Lam xs body) (currify (Lam xs body))]  
     [(BinOp op e1 e2) (BinOp op (transform e1) (transform e2))]
     [(UnOp op e1) (UnOp op (transform e1))]
     [(Let x e1 e2) (Let x (transform e1) (transform e2))]
