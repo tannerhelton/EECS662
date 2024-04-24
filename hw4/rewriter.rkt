@@ -16,32 +16,20 @@
     [_ (transform e)]))
 
 (define (currify e)
-  (define (curry-lambda xs body)
-    (if (null? xs)
-        (begin
-          (displayln "Currying terminal lambda body")
-          (transform body))
-        (let ([first (car xs)]
-              [rest (cdr xs)])
-          (displayln (format "Currying lambda with arg: ~a" first))
-          (Lam (list first) (curry-lambda rest body)))))
-
-  (define (curry-application f args)
-    (define transformed-f (transform f))
-    (define transformed-args (map transform args))
-    (displayln "Currying application")
-    (foldr (lambda (arg acc) (App acc arg)) transformed-f transformed-args))
-
-  (match e
-    [(Lam xs body)
-     (displayln (format "Currying lambda with args: ~a" xs))
-     (curry-lambda xs body)]
-    [(App f args)
-     (displayln (format "Currying application of: ~a with args: ~a" f args))
-     (curry-application f args)]
-    [_ (transform e)]))
+(match e
+    [(App f args) (curry-args (curry-application f args) args)] 
+    [(Lam params es) (curry-application e '())]
+    [(BinOp op e1 e2) (BinOp op (currify e1) (currify e2))] 
+    [(UnOp op e2) (UnOp op (currify e2))] 
+    [(If e1 e2 e3) (If (currify e1) (currify e2) (currify e3))] 
+    [(Cond cs x) (Cond (map (λ (c) (list (currify (first c)) (currify (second c)))) cs) (currify x))] 
+    [(Let x e2 e3) (Let x (currify e2) (currify e3))]
+    [(Var x) e] 
+    [(list x) (map currify (list x))]
+    [e e]))
 
 (define (transform e)
+  (display "Transforming expression: ") (displayln e)
   (match e
     [(Cond cs else-expr) (cond->if e)]
     [(If e1 e2 e3) (If (transform e1) (transform e2) (transform e3))]
@@ -51,6 +39,20 @@
     [(UnOp op e1) (UnOp op (transform e1))]
     [(Let x e1 e2) (Let x (transform e1) (transform e2))]
     [_ e]))
+
+(define (curry-application f args)
+  (match f
+    [(Lam (list param rest) body) (Lam (list param) (curry-application (Lam (list rest) body) args))] 
+    [(Lam param body) f] 
+    [(App e as) (curry-args (curry-application e as) as)] 
+    [f f])) 
+
+(define (curry-args curried args)
+(match args
+    [(list a rest) (curry-args (App curried (list a)) (currify rest))] 
+    ['() (App curried '())] 
+    [(list a) (App curried (list a))] 
+    [a (App curried (list a))]))
 
 (module+ test
   (require rackunit)
