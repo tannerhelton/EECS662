@@ -6,14 +6,14 @@
 
 (define (cond->if e)
   (match e
-    [(Cond cs else-expr)
-     (define (cond->if-helper clauses)
-       (match clauses
-         [(list) (transform else-expr)]
-         [(cons (list pred action) rest)
-          (If (transform pred) (transform action) (cond->if-helper rest))]))
-     (cond->if-helper cs)]
-    [_ (transform e)]))
+    [(Cond cs x) (cond->if-assist cs x)]
+    [(BinOp op e1 e2) (BinOp op (cond->if e1) (cond->if e2))]
+    [(UnOp op e2) (UnOp op (cond->if e2))]
+    [(If e1 e2 e3) (If (cond->if e1) (cond->if e2) (cond->if e3))]
+    [(App e1 e2) (App (cond->if e1) (cond->if e2))]
+    [(Lam params es) (Lam (cond->if params) (cond->if es))]
+    [(list x) (list (cond->if x))]
+    [e e])) 
 
 (define (currify e)
 (match e
@@ -28,17 +28,12 @@
     [(list x) (map currify (list x))]
     [e e]))
 
-(define (transform e)
-  (display "Transforming expression: ") (displayln e)
-  (match e
-    [(Cond cs else-expr) (cond->if e)]
-    [(If e1 e2 e3) (If (transform e1) (transform e2) (transform e3))]
-    [(App f args) (App (transform f) (map transform args))] 
-    [(Lam xs body) (currify (Lam xs body))]  
-    [(BinOp op e1 e2) (BinOp op (transform e1) (transform e2))]
-    [(UnOp op e1) (UnOp op (transform e1))]
-    [(Let x e1 e2) (Let x (transform e1) (transform e2))]
-    [_ e]))
+(define (cond->if-assist clauses x)
+(match clauses
+    [(Cond cs x) (cond->if (Cond cs x))]
+    [(list (list p a) rest) (If (cond->if p) (cond->if a) (cond->if-assist rest x))]
+    [(list p a) (If (cond->if p) (cond->if a) (cond->if-assist '() x))]
+    [else x]))
 
 (define (curry-application f args)
   (match f
