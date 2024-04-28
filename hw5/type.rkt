@@ -65,16 +65,38 @@
     [_              (error "Type error!")]))
 
 (define (tc-seq TE es)
-  (error "TODO"))
+  (define (all-but-last lst)
+    (reverse (cdr (reverse lst))))  
+  
+  (if (null? (cdr es)) 
+      (tc TE (car es))
+      (begin
+        (map (lambda (e) (tc TE e)) (all-but-last es)) 
+        (tc TE (last es))))) 
+
+
 
 (define (tc-new TE e)
-  (error "TODO"))
+  (let ((etype (tc TE e)))
+    (ParamT (T 'ref) etype)))
+
 
 (define (tc-deref TE e)
-  (error "TODO"))
+  (match (tc TE e)
+    [(ParamT (T 'ref) t) t] 
+    [_ (error "Type error: Expected a reference type for dereference")]))
+
 
 (define (tc-set! TE e1 e2)
-  (error "TODO"))
+  (let ((t1 (tc TE e1))
+        (t2 (tc TE e2)))
+    (match t1
+      [(ParamT (T 'ref) t)
+       (if (equal? t t2)
+           t2  
+           (error "Type error: Type mismatch in set!"))]
+      [_ (error "Type error: Expected a reference type in set!")])))
+
 
 (define zip (lambda (l1 l2) (map list l1 l2)))
 
