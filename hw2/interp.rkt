@@ -39,6 +39,7 @@
 
 (define (interp-cond clauses e)
   (match clauses
+    ['() (interp e)]
     [(cons `(,p ,c) rest) (match (interp p)
                                   [#f (interp-cond rest e)]
                                   [_  (interp c)])]))
