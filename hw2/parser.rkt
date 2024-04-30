@@ -12,19 +12,13 @@
     [(list (? unop? u) e) (UnOp u (parse e))]
     [(list (? binop? b) e1 e2) (BinOp b (parse e1) (parse e2))]
     [`(if ,e1 ,e2 ,e3) (If (parse e1) (parse e2) (parse e3))]
-    [`(cond ,@cs (else ,e)) (Cond (parse-cond cs) (parse e))]
     [_ (error "Parse error!")]))
 
 ;; Any -> Boolean
 (define (unop? x)
-  (memq x '(add1 sub1 zero? - not)))
+  (memq x '(add1 sub1 zero?)))
 
 ;; Any -> Boolean
 (define (binop? x)
-  (memq x '(+ - * / <= and or %)))
+  (memq x '(+ - * / <= and)))
 
-(define (parse-cond cs)
-  (match cs
-    ['() '()]
-    [(cons `(,pred ,e) rest) (cons (list (parse pred) (parse e))
-                                (parse-cond rest))]))
