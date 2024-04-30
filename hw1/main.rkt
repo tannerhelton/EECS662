@@ -1,6 +1,27 @@
 #lang racket
 (provide (all-defined-out))
 
+;; EECS 662, Spring 2024
+
+;; You may ask questions on the Canvas Discussions board about these problems.
+;; You are not allowed to share solutions for these problems.
+;; The whole point is to learn the bits of Racket you will need for this
+;; course, so simply copying someone else's code will not serve you well
+;; in the long run.
+;;
+;; HINT: If in doubt, think of possible recursive solutions!
+
+;; ABOUT
+
+;; These are a series of finger-exercise programs to help you:
+;; - learn a bit of Racket
+;; - practice with structural recursion and type-based program design
+
+;; This style of programming will be used throughout the course,
+;; now is the time to master the style!
+
+;; If you've mastered the style, you can write these programs on auto-pilot.
+;; If you haven't, you will struggle.
 
 (module+ test
   (require rackunit))
@@ -11,10 +32,9 @@
 ;; Natural -> Natural
 ;; Compute n!
 (define (fact n)
-  (match n
-    [0 1]
-    [1 1]
-    [_ (* n (fact (- n 1)))]))
+  (if (= n 0)
+      1
+      (* n (fact (- n 1)))))
 
 (module+ test
   (check-equal? (fact 0) 1)
@@ -25,10 +45,9 @@
 ;; Natural -> Natural
 ;; Compute nth Fibonnaci number
 (define (fib n)
-  (match n
-    [0 0]
-    [1 1]
-    [_ (+ (fib (- n 1)) (fib (- n 2)))]))
+  (cond [(= n 0) 0]
+        [(= n 1) 1]
+        [else (+ (fib (- n 1)) (fib (- n 2)))]))
 
 (module+ test
   (check-equal? (fib 0) 0)
@@ -49,9 +68,10 @@
 ;; String String -> String
 ;; Select the longer of the two strings (or first if same length)
 (define (longer s1 s2)
-  (cond
-    [(>= (string-length s1) (string-length s2)) s1]
-    [else s2]))
+  (if (>= (string-length s1) (string-length s2))
+      s1
+      s2))
+
 
 (module+ test
   (check-equal? (longer "" "") "")
@@ -62,7 +82,8 @@
 ;; String -> [Listof String]
 ;; Explode a string into a list of length-1 strings
 (define (explode s)
-  (map ~a (string->list s)))
+  (map string (string->list s)))
+
 
 (module+ test
   (check-equal? (explode "") '())
@@ -72,9 +93,12 @@
 ;; String -> [Listof [List String String]]
 ;; Compute list of bigrams (pairs of adjacent letters) in a string
 (define (bigrams s)
-  (cond
-    [(< (string-length s) 2) '()]
-    [else (cons (list (substring s 0 1) (substring s 1 2)) (bigrams (substring s 1)))]))
+  (let loop ((chars (string->list s)))
+    (if (< (length chars) 2)
+        '()
+        (cons (list (string (first chars)) (string (second chars)))
+              (loop (rest chars))))))
+
 
 (module+ test
   (check-equal? (bigrams "") '())
@@ -97,9 +121,8 @@
 ;; [Listof Number] -> Natural
 ;; Compute the length of given list of numbers
 (define (length-lon ls)
-  (match ls
-    ['() 0]
-    [(cons n ls) (+ 1 (length-lon ls))]))
+  (length ls))
+
 
 (module+ test
   (check-equal? (length-lon '()) 0)
@@ -110,9 +133,8 @@
 ;; [Listof Number] -> Number
 ;; Compute the sum of given list of numbers
 (define (sum ls)
-  (match ls
-    ['() 0]
-    [(cons n ls) (+ n (sum ls))]))
+  (apply + ls))
+
 
 (module+ test
   (check-equal? (sum '()) 0)
@@ -124,9 +146,8 @@
 ;; Compute the pairwise sum of given list of numbers
 ;; ASSUME: lists have equal length
 (define (zip-add ls1 ls2)
-  (match ls1
-    ['() '()]
-    [(cons n ls1) (cons (+ (first ls2) n) (zip-add ls1 (rest ls2)))]))
+  (map + ls1 ls2))
+
 
 (module+ test
   (check-equal? (zip-add '() '()) '())
@@ -137,9 +158,8 @@
 ;; Compute the pairwise list of given list of numbers
 ;; ASSUME: lists have equal length
 (define (zip-lon ls1 ls2)
-  (match ls1
-    ['() '()]
-    [(cons n ls1) (cons (list n (first ls2)) (zip-lon ls1 (rest ls2)))]))
+  (map list ls1 ls2))
+
 
 (module+ test
   (check-equal? (zip-lon '() '()) '())
@@ -149,9 +169,7 @@
 ;; [Pairof Real [Listof Real]] -> Real
 ;; Compute max element of non-empty list of numbers
 (define (max-lon xs)
-  (match xs
-    [(cons n '()) n]
-    [(cons n xs) (max n (max-lon xs))]))
+  (foldl max (first xs) xs))
 
 (module+ test
   (check-equal? (max-lon '(1)) 1)
@@ -163,9 +181,8 @@
 ;; Sort list into ascending order
 ;; HINT: do insertion sort by writing and using the helper below
 (define (sort-asc xs)
-  (match xs
-    ['() '()]
-    [(cons n xs) (insert-asc n (sort-asc xs))]))
+  ;; TODO
+  xs)
 
 (module+ test
   (check-equal? (sort-asc '()) '())
@@ -178,11 +195,8 @@
 ;; Insert number into sorted list
 ;; ASSUME: given list is sorted in ascending order
 (define (insert-asc n xs)
-  (match xs
-    ['() (list n)]
-    [(cons m xs) (cond
-      [(< m n) (cons m (insert-asc n xs))]
-      [else (cons n (cons m xs))])]))
+  ;; TODO
+  xs)
 
 (module+ test
   (check-equal? (insert-asc 5 '()) '(5))
@@ -196,12 +210,17 @@
 ;; ∀ (α) (α -> Real) [Pairof α [Listof α]] -> α
 ;; Find element that minimizes the given measure (take first if more than one)
 (define (minimize f xs)
-  (match xs
-    [(cons x '()) x]
-    [(cons x xs) (let ([y (minimize f xs)])
-      (cond
-        [(< (f y) (f x)) y]
-        [else x]))]))
+  (if (null? xs)
+      (error "Empty list")
+      (let loop ((min-x (first xs))
+                 (min-fx (f (first xs)))
+                 (rest-xs (rest xs)))
+        (if (null? rest-xs)
+            min-x
+            (let ((fx (f (first rest-xs))))
+              (if (< fx min-fx)
+                  (loop (first rest-xs) fx (rest rest-xs))
+                  (loop min-x min-fx (rest rest-xs))))))))
 
 (module+ test
   (check-equal? (minimize abs '(1 -2 3)) 1)
@@ -212,16 +231,9 @@
 ;; Sort list in ascending order according to given comparison
 ;; ENSURE: result is stable
 (define (sort < xs)
-  (match xs
-    ['() '()]
-    [(cons n xs) (insert-poly < n (sort < xs))]))
+  (sort xs <))
 
-(define (insert-poly < n xs)
-  (match xs
-    ['() (list n)]
-    [(cons m xs) (cond
-      [(< m n) (cons m (insert-poly < n xs))]
-      [else (cons n (cons m xs))])]))
+
 
 (module+ test
   (check-equal? (sort < '(1 -2 3)) '(-2 1 3))
@@ -235,9 +247,8 @@
 ;; Zip together lists into a list of lists
 ;; ASSUME: lists are the same length
 (define (zip as bs)
-  (match as
-    ['() '()]
-    [(cons n as) (cons (list n (first bs)) (zip-lon as (rest bs)))]))
+  (map list as bs))
+
 
 (module+ test
   (check-equal? (zip '() '()) '())
@@ -249,10 +260,8 @@
 ;; Compose a list of functions into a single function
 ;; ((pipe (list f1 f2 f3)) x) ≡ (f1 (f2 (f3 x)))
 (define (pipe fs)
-  (match fs
-    ['() '()]
-    [(cons f `()) (lambda (x) (f x))]
-    [(cons f fs) (lambda (x) (f ((pipe fs) x)))]))
+  (foldl (λ (f g) (λ (x) (f (g x)))) identity fs))
+
 
 (module+ test
   (check-equal? ((pipe (list number->string sqr add1)) 5) "36")
@@ -263,22 +272,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Peano numbers
 
-;; Unary encoding of the natural numbers
+;; Unary encoding of the natural numbers. Z is zero, S(Z) is 1, S(S(Z)) is 2, and so on.
 
 ;; type N = (Z) | (S N)
 
 ;; We will represent Peano numbers in racket with structures.
 (struct Z ()      #:prefab)
-(struct S (N)     #:prefab)
-;; this structure 'S' should be recursive -
-;; it's parameter should be another Peano Number
+(struct S (N)     #:prefab)   
+;; this structure 'S' should be recursive - 
+;; it's parameter should be another Peano Number 
 
 ;; Natural -> N
 ;; Convert natural to Peano
 (define (nat->peano n)
-  (match n
-    [0 (Z)]
-    [else (S (nat->peano (- n 1)))]))
+  (if (= n 0)
+      (Z)
+      (S (nat->peano (- n 1)))))
+
 
 (module+ test
   (check-equal? (nat->peano 0) (Z))
@@ -291,7 +301,7 @@
 (define (peano->nat n)
   (match n
     [(Z) 0]
-    [(S x) (+ 1 (peano->nat x))]))
+    [(S n) (+ 1 (peano->nat n))]))
 
 (module+ test
   (check-equal? (peano->nat (Z)) 0)
@@ -306,36 +316,31 @@
 (define (plus n1 n2)
   (match n1
     [(Z) n2]
-    [(S x) (S (plus x n2))]))
+    [(S n1) (S (plus n1 n2))]))
+
 
 (module+ test
   (check-equal? (plus (Z) (Z)) (Z))
   (check-equal? (plus (Z) (S (Z))) (S (Z)))
   (check-equal? (plus (S (Z)) (Z)) (S (Z)))
-  (check-equal? (plus (S (Z)) (S (Z))) (S (S (Z))))
-  (check-equal? (plus (S (Z)) (S (S (S (Z))))) (S (S (S (S (Z)))))))
+  (check-equal? (plus (S (Z)) (S (Z))) (S (S (Z)))))
 
 ;; N N -> N
 ;; Multiply two Peano numbers together
 (define (mult n1 n2)
-  (match n1
-    [(Z) (Z)]
-    [(S (Z)) n2]
-    [(S x) (plus n2 (mult x n2))]))
+  ;; TODO
+  (Z))
 
 (module+ test
   (check-equal? (mult (Z) (Z)) (Z))
   (check-equal? (mult (Z) (S (Z))) (Z))
   (check-equal? (mult (S (Z)) (Z)) (Z))
-  (check-equal? (mult (S (Z)) (S (Z))) (S (Z)))
-  (check-equal? (mult (S (Z)) (S (S (S (S (Z)))))) (S (S (S (S (Z))))))
-  (check-equal? (mult (S (S (S (Z)))) (S (S (S (Z))))) (S (S (S (S (S (S (S (S (S (Z))))))))))))
+  (check-equal? (mult (S (Z)) (S (Z))) (S (Z))))
 
 ;; ∀ (α) N (α -> α) -> (α -> α)
 (define (iter n f)
-  (match n
-    [(Z) (lambda (x) x)]
-    [(S n) (lambda (x) (f ((iter n f) x)))]))
+  ;; TODO
+  (λ (a) a))
 
 (module+ test
   ;; Natural -> Natural
@@ -364,9 +369,9 @@
 
 ;; We will represent Binary trees in racket with structures.
 (struct leaf ()             #:transparent)
-(struct node (n left right) #:transparent)
-;; this structure 'node' should be recursive -
-;; it's last two parameters should be binary trees
+(struct node (n left right) #:transparent)   
+;; this structure 'node' should be recursive - 
+;; it's last two parameters should be binary trees 
 
 ;; Follow this template for functions on binary trees.
 ;; bt ... -> ...
@@ -385,7 +390,8 @@
 (define (btn-height bt)
   (match bt
     [(leaf) 0]
-    [(node n l r) (+ 1 (max (btn-height l) (btn-height r)))]))
+    [(node _ left right)
+     (add1 (max (btn-height left) (btn-height right)))]))
 
 (module+ test
   (check-equal? (btn-height (leaf)) 0)
@@ -397,7 +403,8 @@
 (define (btn-count bt)
   (match bt
     [(leaf) 0]
-    [(node n l r) (+ 1 (btn-count l) (btn-count r))]))
+    [(node _ left right)
+     (add1 (+ (btn-count left) (btn-count right)))]))
 
 (module+ test
   (check-equal? (btn-count (leaf)) 0)
@@ -408,8 +415,9 @@
 ;; Compute the mirror image of binary tree
 (define (btn-mirror bt)
   (match bt
-    [(leaf) bt]
-    [(node n l r) (node n (btn-mirror r) (btn-mirror l))]))
+    [(leaf) (leaf)]
+    [(node n left right)
+     (node n (btn-mirror right) (btn-mirror left))]))
 
 (module+ test
   (check-equal? (btn-mirror (leaf)) (leaf))
@@ -422,7 +430,8 @@
 (define (btn-sum bt)
   (match bt
     [(leaf) 0]
-    [(node n l r) (+ n (btn-sum l) (btn-sum r))]))
+    [(node n left right)
+     (+ n (btn-sum left) (btn-sum right))]))
 
 (module+ test
   (check-equal? (btn-sum (leaf)) 0)
@@ -432,9 +441,8 @@
 ;; Natural Number -> BTNumber
 ;; Generate a full bt of height h containing given number n at each node
 (define (btn-gen-full h n)
-  (match h
-    [0 (leaf)]
-    [_ (node n (btn-gen-full (- h 1) n) (btn-gen-full (- h 1) n))]))
+  ;; TODO
+  (leaf))
 
 (module+ test
   (check-equal? (btn-gen-full 0 8) (leaf))
@@ -444,11 +452,8 @@
 ;; BTNumber Number -> Boolean
 ;; Does the bt contain number n?
 (define (btn-contains? bt n)
-  (match bt
-    [(leaf) #f]
-    [(node k l r) (cond
-      [(= n k) #t]
-      [else (or (btn-contains? l n) (btn-contains? r n))])]))
+  ;; TODO
+  #f)
 
 (module+ test
   (check-equal? (btn-contains? (leaf) 8) #f)
@@ -462,7 +467,7 @@
 (define (btn-preorder bt)
   (match bt
     [(leaf) '()]
-    [(node n l r) (append (list n) (btn-preorder l) (btn-preorder r))]))
+    [(node n left right) (cons n (append (btn-preorder left) (btn-preorder right)))]))
 
 (module+ test
   (check-equal? (btn-preorder (leaf)) '())
