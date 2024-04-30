@@ -1,6 +1,6 @@
 #lang racket
 
-(provide Val UnOp BinOp If Cond Or Not Mod)
+(provide Val UnOp BinOp If Cond)
 
 ;; type Expr =
 ;; | (Val v)
@@ -11,7 +11,4 @@
 (struct UnOp (u e) #:prefab)
 (struct BinOp (b e1 e2) #:prefab)
 (struct If (e1 e2 e3) #:prefab)
-(struct Or (e1 e2) #:prefab)
-(struct Not (e) #:prefab)
-(struct Mod (e1 e2) #:prefab)
-(struct Cond (clauses) #:prefab)
+(struct Cond (clauses e) #:prefab)

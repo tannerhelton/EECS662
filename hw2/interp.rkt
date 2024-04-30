@@ -11,17 +11,20 @@
     [(UnOp u e) (interp-unop u e)]
     [(BinOp b e1 e2) (interp-binop b e1 e2)]
     [(If e1 e2 e3) (interp-if e1 e2 e3)]
-    [(Or e1 e2) (let ([v1 (interp e1)]) (if (equal? v1 #f) (interp e2) v1))]
-    [(Not e) (not (interp e))]
-    [(Mod e1 e2) (remainder (interp e1) (interp e2))]
-    [(Cond clauses) (interp-cond clauses)]))
+    [(Cond clauses e) (interp-cond clauses e)]))
 
 (define (interp-unop u e)
   (match u
     ['add1 (add1 (interp e))]
     ['sub1 (sub1 (interp e))]
     ['zero? (zero? (interp e))]
-    ['neg (- (interp e))]))
+    ['not (match (interp e)
+      [#f #t]
+      [_  #f]
+    )]
+    ['- (- (interp e))])
+    )
+
 
 (define (interp-binop b e1 e2)
   (match b
@@ -31,13 +34,15 @@
     ['/ (quotient (interp e1) (interp e2))]
     ['<= (<= (interp e1) (interp e2))]
     ['and (and (interp e1) (interp e2))]
+    ['or (or (interp e1) (interp e2))]
     ['% (remainder (interp e1) (interp e2))]))
 
-(define (interp-cond clauses)
-  (for/or ([clause (in-list clauses)])
-    (match clause
-      [(list 'else e) (interp e)]
-      [(list p a) (if (interp p) (interp a) #f)])))
+(define (interp-cond clauses e)
+  (match clauses
+    ['() (interp e)]
+    [(cons `(,p ,c) rest) (match (interp p)
+                                  [#f (interp-cond rest e)]
+                                  [_  (interp c)])]))
 
 (define (interp-if e1 e2 e3)
   (match (interp e1)
