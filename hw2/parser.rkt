@@ -12,15 +12,15 @@
     [(list (? unop? u) e) (UnOp u (parse e))]
     [(list (? binop? b) e1 e2) (BinOp b (parse e1) (parse e2))]
     [`(if, e1, e2, e3) (If (parse e1) (parse e2) (parse e3))]
-    [`(cond ,@clauses) (parse-cond clauses)]
+    [`(cond ,@clauses (else, e)) (Cond (parse-cond clauses) (parse e))]
     [_ (error "Parse error!")]))
 
 (define (parse-cond clauses)
-  (Cond (map (lambda (clause)
+  (map (lambda (clause)
                (match clause
                  [`[else, e] (list 'else (parse e))] 
                  [`[,p ,a] (list (parse p) (parse a))]))
-             clauses)))
+             clauses))
 
 ;; Any -> Boolean
 (define (unop? x)
