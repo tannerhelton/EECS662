@@ -181,8 +181,7 @@
 ;; Sort list into ascending order
 ;; HINT: do insertion sort by writing and using the helper below
 (define (sort-asc xs)
-  ;; TODO
-  xs)
+  (foldl (λ (x xs) (insert-asc x xs)) '() xs))
 
 (module+ test
   (check-equal? (sort-asc '()) '())
@@ -195,8 +194,9 @@
 ;; Insert number into sorted list
 ;; ASSUME: given list is sorted in ascending order
 (define (insert-asc n xs)
-  ;; TODO
-  xs)
+  (cond [(null? xs) (list n)]
+        [(<= n (first xs)) (cons n xs)]
+        [else (cons (first xs) (insert-asc n (rest xs)))]))
 
 (module+ test
   (check-equal? (insert-asc 5 '()) '(5))
@@ -231,7 +231,12 @@
 ;; Sort list in ascending order according to given comparison
 ;; ENSURE: result is stable
 (define (sort < xs)
-  (sort xs <))
+  (foldl (λ (x xs) (insert x xs <)) '() xs))
+
+(define (insert x xs <)
+  (cond [(null? xs) (list x)]
+        [(< x (first xs)) (cons x xs)]
+        [else (cons (first xs) (insert x (rest xs) <))]))
 
 
 
@@ -260,7 +265,7 @@
 ;; Compose a list of functions into a single function
 ;; ((pipe (list f1 f2 f3)) x) ≡ (f1 (f2 (f3 x)))
 (define (pipe fs)
-  (foldl (λ (f g) (λ (x) (f (g x)))) identity fs))
+  (foldr (λ (f g) (λ (x) (f (g x)))) identity fs))
 
 
 (module+ test
@@ -328,8 +333,10 @@
 ;; N N -> N
 ;; Multiply two Peano numbers together
 (define (mult n1 n2)
-  ;; TODO
-  (Z))
+  (match n1
+    [(Z) (Z)]
+    [(S n1) (plus n2 (mult n1 n2))]))
+
 
 (module+ test
   (check-equal? (mult (Z) (Z)) (Z))
@@ -339,8 +346,9 @@
 
 ;; ∀ (α) N (α -> α) -> (α -> α)
 (define (iter n f)
-  ;; TODO
-  (λ (a) a))
+  (match n
+    [(Z) identity]
+    [(S n) (compose f (iter n f))]))
 
 (module+ test
   ;; Natural -> Natural
@@ -441,8 +449,9 @@
 ;; Natural Number -> BTNumber
 ;; Generate a full bt of height h containing given number n at each node
 (define (btn-gen-full h n)
-  ;; TODO
-  (leaf))
+  (cond
+    [(= h 0) (leaf)]
+    [else (node n (btn-gen-full (sub1 h) n) (btn-gen-full (sub1 h) n))]))
 
 (module+ test
   (check-equal? (btn-gen-full 0 8) (leaf))
@@ -452,8 +461,10 @@
 ;; BTNumber Number -> Boolean
 ;; Does the bt contain number n?
 (define (btn-contains? bt n)
-  ;; TODO
-  #f)
+  (match bt
+    [(leaf) #f]
+    [(node m left right)
+     (or (= m n) (btn-contains? left n) (btn-contains? right n))]))
 
 (module+ test
   (check-equal? (btn-contains? (leaf) 8) #f)
